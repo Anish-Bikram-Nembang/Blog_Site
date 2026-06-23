@@ -35,3 +35,7 @@ export interface PostForFeed extends PostWithoutContent {
   categoryName?: string;
   likes: number
 }
+
+export interface PostWithMeta extends PostForFeed {
+  content: string;
+}

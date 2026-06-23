@@ -3,6 +3,7 @@ import { CreateUserPayload, User, UserSchema } from "./users.types.js"
 
 interface UserRepository {
   createUser(createUserPayload: CreateUserPayload): Promise<User>
+  findUserById(userId: string): Promise<User>;
   findUserByUsername(username: string): Promise<UserSchema | null>
 }
 const userRepository: UserRepository = {
@@ -13,6 +14,12 @@ const userRepository: UserRepository = {
       , [createUserPayload.username, createUserPayload.hashedPassword]);
     const user = result.rows[0];
     return user as User;
+  },
+  async findUserById(userId) {
+    const result = await pool.query(
+      `SELECT username, user_id AS "userId", hashed_password AS "hashedPassword" FROM users WHERE user_id = $1 LIMIT 1`, [userId]
+    );
+    return result.rows[0] as User;
   },
   async findUserByUsername(username) {
     const lowercasedUsername = username.toLowerCase();
