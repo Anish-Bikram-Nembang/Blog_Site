@@ -2,7 +2,7 @@ import pool from "../database/pool.service.js"
 import { CreateUserPayload, User, UserSchema } from "./users.types.js"
 
 interface UserRepository {
-  createUser(createuserPayload: CreateUserPayload): Promise<User>
+  createUser(createUserPayload: CreateUserPayload): Promise<User>
   findUserByUsername(username: string): Promise<UserSchema | null>
 }
 const userRepository: UserRepository = {

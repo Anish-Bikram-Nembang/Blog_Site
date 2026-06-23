@@ -19,7 +19,6 @@ const authService = {
         if (!existingUser) {
             throw new UnauthorizedError("Invalid credentials");
         }
-        console.log(JSON.stringify(existingUser, null, 2));
         const match = await bcrypt.compare(payload.password, existingUser.hashedPassword);
         if (!match) {
             throw new UnauthorizedError("Invalid credentials");

@@ -8,7 +8,7 @@ const userRepository = {
     },
     async findUserByUsername(username) {
         const lowercasedUsername = username.toLowerCase();
-        const result = await pool.query(`SELECT user_id AS "userId", hashed_password AS "hashedPassword" FROM users WHERE username = $1 LIMIT 1`, [lowercasedUsername]);
+        const result = await pool.query(`SELECT username, user_id AS "userId", hashed_password AS "hashedPassword" FROM users WHERE username = $1 LIMIT 1`, [lowercasedUsername]);
         const user = result.rows[0];
         return user ?? null;
     }
