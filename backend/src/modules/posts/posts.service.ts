@@ -1,11 +1,11 @@
-import { CreatePostPayload, Feed, PostSchema, PostWithMeta } from "./posts.types.js"
+import { CreatePostRequest, Feed, PostSchema, PostWithMeta } from "./posts.types.js"
 import postRepository from "./posts.repository.js"
 import { NotFoundError } from "../../utils/errors.js"
 import userService from "../users/users.service.js"
 
 interface PostService {
   getFeed(limit: number, page: number): Promise<Feed>
-  createPost(createPostPayload: CreatePostPayload): Promise<PostSchema>
+  createPost(createPostPayload: CreatePostRequest): Promise<PostSchema>
   deletePost(postId: string): Promise<void>
   getPostById(postId: string): Promise<PostWithMeta>
   getPostBySlug(slug: string): Promise<PostWithMeta>
@@ -25,9 +25,10 @@ const postService: PostService = {
     }
   },
   async createPost(createPostPayload) {
+    const slug = generateSlug(createPostPayload.title);
     const author = await userService.findUserById(createPostPayload.authorId);
     if (!author) throw new NotFoundError('Author not found');
-    return postRepository.createPost(createPostPayload);
+    return postRepository.createPost({ ...createPostPayload, slug });
   },
   async deletePost(postId) {
     const post = await postRepository.getPostById(postId);
@@ -53,3 +54,12 @@ const postService: PostService = {
 
 }
 export default postService;
+
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
