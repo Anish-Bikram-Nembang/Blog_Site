@@ -33,3 +33,8 @@ export class ValidationError extends AppError {
     super(message, 400);
   }
 }
+export class BadRequestError extends AppError {
+  constructor(message = "Bad request") {
+    super(message, 400);
+  }
+}
