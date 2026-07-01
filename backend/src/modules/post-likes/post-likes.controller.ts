@@ -8,8 +8,9 @@ const postLikeController = {
     const result = await postLikeService.createLike(userId, postId);
     res.status(200).json(result);
   },
-  async dislike(req: Request, res: Response) {
-    const { userId, postId } = req.params;
+  async unlike(req: Request, res: Response) {
+    const userId = req.user.userId;
+    const postId = req.params.postId;
     const result = await postLikeService.deleteLike(userId, postId);
     res.status(204).json(result);
   }
