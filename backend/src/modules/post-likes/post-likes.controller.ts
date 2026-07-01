@@ -3,7 +3,7 @@ import postLikeService from "./post-likes.service.js";
 
 const postLikeController = {
   async like(req: Request, res: Response) {
-    const userId = req.params.userId;
+    const userId = req.user.userId;
     const postId = req.params.postId;
     const result = await postLikeService.createLike(userId, postId);
     res.status(200).json(result);
