@@ -3,20 +3,20 @@ import postLikesRepository from "./post-likes.repository.js"
 import { PostLike } from "./post-likes.types.js"
 
 interface PostLikeService {
-  createLike(userId: string, postId: string): Promise<PostLike>
-  deleteLike(userId: string, postId: string): Promise<PostLike>
+  createLike(authorId: string, postId: string): Promise<PostLike>
+  deleteLike(authorId: string, postId: string): Promise<PostLike>
 }
 
 const postLikeService: PostLikeService = {
-  async createLike(userId, postId) {
-    const existingLike = await postLikesRepository.getLike(userId, postId);
+  async createLike(authorId, postId) {
+    const existingLike = await postLikesRepository.getLike(authorId, postId);
     if (existingLike) {
       throw new ConflictError("Like already exists");
     }
-    return postLikesRepository.createLike(userId, postId);
+    return postLikesRepository.createLike(authorId, postId);
   },
-  async deleteLike(userId, postId) {
-    const result = await postLikesRepository.deleteLike(userId, postId);
+  async deleteLike(authorId, postId) {
+    const result = await postLikesRepository.deleteLike(authorId, postId);
     if (!result) {
       throw new NotFoundError("Like not found");
     }
