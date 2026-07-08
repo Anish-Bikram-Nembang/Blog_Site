@@ -2,7 +2,7 @@ import pool from "../database/pool.service.js"
 import { PostForFeed, PostWithMeta, CreatePostPayload, PostSchema } from "./posts.types.js"
 
 interface PostRepository {
-  getFeed(limit: number, offset: number): Promise<{ data: PostForFeed[], total: number }>
+  getFeed(limit: number, offset: number, categoryId?: string): Promise<{ data: PostForFeed[], total: number }>
   createPost(createPostPayload: CreatePostPayload): Promise<PostSchema>
   deletePost(postId: string): Promise<void>
   getPostById(postId: string): Promise<PostWithMeta>
@@ -69,7 +69,7 @@ const postRepository: PostRepository = {
       `, [slug]);
     return result.rows[0] as PostWithMeta;
   },
-  async getFeed(limit, offset) {
+  async getFeed(limit, offset, categoryId) {
     const result = await pool.query(`
       SELECT
         p.post_id AS "postId",

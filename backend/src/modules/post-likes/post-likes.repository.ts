@@ -3,46 +3,46 @@ import { PostLike } from "./post-likes.types.js"
 
 
 interface PostLikesRepository {
-  createLike(userId: string, postId: string): Promise<PostLike>
-  deleteLike(userId: string, postId: string): Promise<PostLike | null>
-  getLike(userId: string, postId: string): Promise<PostLike | null>
+  createLike(authorId: string, postId: string): Promise<PostLike>
+  deleteLike(authorId: string, postId: string): Promise<PostLike | null>
+  getLike(authorId: string, postId: string): Promise<PostLike | null>
 }
 
 const postLikesRepository: PostLikesRepository = {
-  async createLike(userId, postId) {
+  async createLike(authorId, postId) {
     const result = await pool.query<PostLike>(`
       INSERT INTO post_likes
-      (user_id, post_id)
+      (author_id, post_id)
       VALUES ($1, $2)
       RETURNING
-        user_id AS "userId",
+        author_id AS "authorId",
         post_id AS "postId",
         created_at AS "createdAt"
-      `, [userId, postId]);
+      `, [authorId, postId]);
     return result?.rows[0];
   },
-  async getLike(userId, postId) {
+  async getLike(authorId, postId) {
     const result = await pool.query<PostLike>(`
       SELECT
-        user_id AS "userId",
+        author_id AS "authorId",
         post_id AS "postId",
         created_at AS "createdAt"
       FROM post_likes
-      WHERE user_id = $1
+      WHERE author_id = $1
       AND post_id = $2
-      `, [userId, postId]);
+      `, [authorId, postId]);
     return result?.rows[0] ?? null;
   },
-  async deleteLike(userId, postId) {
+  async deleteLike(authorId, postId) {
     const result = await pool.query<PostLike>(`
       DELETE FROM post_likes
-      WHERE user_id = $1
+      WHERE author_id = $1
       AND post_id = $2
       RETURNING
-        user_id AS "userId",
+        author_id AS "authorId",
         post_id AS "postId",
         created_at AS "createdAt"
-      `, [userId, postId]);
+      `, [authorId, postId]);
     return result?.rows[0] ?? null;
   }
 }

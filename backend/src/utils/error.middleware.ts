@@ -3,7 +3,7 @@ import {
 } from "express"
 import { AppError } from "./errors.js"
 
-const errorMiddleware = (err: unknown, req: Request, res: Response, next: NextFunction) => {
+const errorMiddleware = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       message: err.message

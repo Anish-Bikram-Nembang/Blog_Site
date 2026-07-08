@@ -1,18 +1,18 @@
 import { Request, Response } from "express";
-import postLikeService from "./post-likes.service.js";
+import commentLikeService from "./comment-likes.service.js";
 import { BadRequestError, NotFoundError } from "../../utils/errors.js";
 
-const postLikeController = {
+const commentLikeController = {
   async like(req: Request, res: Response) {
     const userId = req.user?.userId;
     if (!userId) {
       throw new BadRequestError();
     }
-    const postId = req.params.postId;
-    if (typeof postId !== "string") {
+    const commentId = req.params.commentId;
+    if (typeof commentId !== "string") {
       throw new NotFoundError();
     }
-    const result = await postLikeService.createLike(userId, postId);
+    const result = await commentLikeService.createLike(userId, commentId);
     res.status(200).json(result);
   },
   async unlike(req: Request, res: Response) {
@@ -20,12 +20,12 @@ const postLikeController = {
     if (!userId) {
       throw new BadRequestError();
     }
-    const postId = req.params.postId;
-    if (typeof postId !== "string") {
+    const commentId = req.params.commentId;
+    if (typeof commentId !== "string") {
       throw new NotFoundError();
     }
-    const result = await postLikeService.deleteLike(userId, postId);
+    const result = await commentLikeService.deleteLike(userId, commentId);
     res.status(204).json(result);
   }
 }
-export default postLikeController;
+export default commentLikeController;
