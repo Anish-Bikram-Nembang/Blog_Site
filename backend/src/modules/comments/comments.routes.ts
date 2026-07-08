@@ -1,10 +1,10 @@
 import { Router } from "express";
 import commentController from "./comments.controller.js";
 
-const router = Router({ mergeParams: true });
+export const nestedCommentRoutes = Router({ mergeParams: true });
+nestedCommentRoutes.get('/', commentController.getCommentsByPostId);
+nestedCommentRoutes.post('/', commentController.postComment);
 
-router.get('/', commentController.getCommentsByPostId);
-router.post('/', commentController.postComment);
-router.delete('/', commentController.deleteComment);
+export const flatCommentRoutes = Router();
+flatCommentRoutes.delete('/:commentId', commentController.deleteComment);
 
-export default router;
