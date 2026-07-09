@@ -3,6 +3,13 @@ import pool from "./pool.service.js"
 const seederService = {
   async seedSchema() {
     try {
+      await pool.query(`DROP TABLE IF EXISTS comment_likes`);
+      await pool.query(`DROP TABLE IF EXISTS comments`);
+      await pool.query(`DROP TABLE IF EXISTS post_likes`);
+      await pool.query(`DROP TABLE IF EXISTS posts`);
+      await pool.query(`DROP TABLE IF EXISTS categories`);
+      await pool.query(`DROP TABLE IF EXISTS users`);
+      console.log('tables dropped');
       await pool.query(`
         CREATE TABLE users (
           user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
