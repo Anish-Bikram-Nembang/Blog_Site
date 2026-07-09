@@ -11,7 +11,7 @@ const userRepository: UserRepository = {
     const result = await pool.query(
       `INSERT INTO users (username, hashed_password)
        VALUES ($1, $2) RETURNING user_id, username`
-      , [createUserPayload.username, createUserPayload.hashedPassword]);
+      , [createUserPayload.username.toLowerCase(), createUserPayload.hashedPassword]);
     const user = result.rows[0];
     return user as User;
   },
