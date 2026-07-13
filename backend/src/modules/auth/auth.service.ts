@@ -4,7 +4,7 @@ import config from "../../config.js"
 import userService from "../users/users.service.js"
 import jwt from "jsonwebtoken"
 import { User } from "../users/users.types.js";
-import { ConflictError, UnauthorizedError } from "../../utils/errors.js";
+import { ConflictError, UnauthorizedError } from "../../errors/errors.js";
 
 interface AuthService {
   signup(payload: SignUpRequest): Promise<{ user: User, accessToken: string }>

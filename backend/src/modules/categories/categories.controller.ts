@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import categoriesService from "./categories.service.js";
-import { NotFoundError } from "../../utils/errors.js";
+import { NotFoundError } from "../../errors/errors.js";
 
 const categoriesController = {
   async getAllCategories(_req: Request, res: Response) {

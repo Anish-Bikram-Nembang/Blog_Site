@@ -1,6 +1,6 @@
 import { CreatePostRequest, Feed, PostSchema, PostWithMeta } from "./posts.types.js"
 import postRepository from "./posts.repository.js"
-import { NotFoundError } from "../../utils/errors.js"
+import { NotFoundError } from "../../errors/errors.js"
 import userService from "../users/users.service.js"
 
 interface PostService {

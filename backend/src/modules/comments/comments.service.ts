@@ -1,4 +1,4 @@
-import { NotFoundError } from "../../utils/errors.js";
+import { NotFoundError } from "../../errors/errors.js";
 import commentRepository from "./comments.repository.js"
 
 const commentService = {
