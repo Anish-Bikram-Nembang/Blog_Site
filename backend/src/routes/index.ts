@@ -5,7 +5,7 @@ import postLikeRoutes from "../modules/post-likes/post-likes.routes.js"
 import { nestedCommentRoutes, flatCommentRoutes } from "../modules/comments/comments.routes.js";
 import commentLikesRoutes from "../modules/comment-likes/comment-likes.routes.js";
 import authMiddleware from "../modules/auth/auth.middleware.js";
-import errorMiddleware from "../utils/error.middleware.js";
+import errorMiddleware from "../errors/errors.middleware.js";
 
 const router = Router();
 
