@@ -1,4 +1,4 @@
-import pool from "../database/pool.service.js"
+import pool from "../../database/pool.service.js"
 import { PostForFeed, PostWithMeta, CreatePostPayload, PostSchema } from "./posts.types.js"
 
 interface PostRepository {

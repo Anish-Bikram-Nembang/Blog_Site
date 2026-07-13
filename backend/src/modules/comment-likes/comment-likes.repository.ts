@@ -1,4 +1,4 @@
-import pool from "../database/pool.service.js"
+import pool from "../../database/pool.service.js"
 import { CommentLike } from "./comment-likes.types.js"
 
 

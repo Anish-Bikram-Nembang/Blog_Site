@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import postLikeService from "./post-likes.service.js";
-import { BadRequestError, NotFoundError } from "../../utils/errors.js";
+import { ValidationError, NotFoundError } from "../../errors/errors.js";
 
 const postLikeController = {
   async like(req: Request, res: Response) {
     const userId = req.user?.userId;
     if (!userId) {
-      throw new BadRequestError();
+      throw new ValidationError();
     }
     const postId = req.params.postId;
     if (typeof postId !== "string") {
@@ -18,7 +18,7 @@ const postLikeController = {
   async unlike(req: Request, res: Response) {
     const userId = req.user?.userId;
     if (!userId) {
-      throw new BadRequestError();
+      throw new ValidationError();
     }
     const postId = req.params.postId;
     if (typeof postId !== "string") {

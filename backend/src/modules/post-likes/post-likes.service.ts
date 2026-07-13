@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "../../utils/errors.js"
+import { ConflictError, NotFoundError } from "../../errors/errors.js"
 import postLikesRepository from "./post-likes.repository.js"
 import { PostLike } from "./post-likes.types.js"
 

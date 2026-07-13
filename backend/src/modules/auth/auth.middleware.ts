@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import config from "../../config.js";
-import { BadRequestError, UnauthorizedError } from "../../utils/errors.js";
+import { ValidationError, UnauthorizedError } from "../../errors/errors.js";
 import jwt from "jsonwebtoken"
 
 export interface JwtPayload {
@@ -11,12 +11,12 @@ export interface JwtPayload {
 const authMiddleware = (req: Request, _res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    throw new BadRequestError("Authorization header is missing");
+    throw new ValidationError("Authorization header is missing");
   }
   const secretKey = config.jwtSecret;
   const token = authHeader.split(" ")[1];
   if (!token) {
-    throw new BadRequestError("Token is missing");
+    throw new ValidationError("Token is missing");
   }
   try {
     const verifiedPayload = jwt.verify(token, secretKey, { algorithms: ["HS256"] }) as JwtPayload;

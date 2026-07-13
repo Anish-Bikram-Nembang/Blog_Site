@@ -11,7 +11,7 @@ http:
     data: |-
       {
         "username": "Enkoki",
-        "password": "cannotDefeatOrinOfWater"
+          "password": "cannotDefeatOrinOfWater"
       }
   auth: inherit
 
