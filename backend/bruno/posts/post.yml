@@ -1,0 +1,23 @@
+info:
+  name: post
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts/"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "rijan",
+        "content": "rijan cannot defeat orin or water",
+        "description": "rijan's real name is Enkoki"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,29 @@
+info:
+  name: postComment
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts/{{postId}}/comments"
+  body:
+    type: json
+    data: |-
+      {
+        "content": "Helloooo"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const commentId = res.body.commentId;
+        console.log(commentId);
+        bru.setVar("commentId", commentId);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
