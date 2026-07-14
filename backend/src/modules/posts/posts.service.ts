@@ -1,20 +1,19 @@
 import { CreatePostRequest, Feed, PostSchema, PostWithMeta } from "./posts.types.js"
 import postRepository from "./posts.repository.js"
-import { NotFoundError } from "../../errors/errors.js"
-import userService from "../users/users.service.js"
+import { ConflictError, ForbiddenError, NotFoundError } from "../../errors/errors.js"
 
 interface PostService {
-  getFeed(limit: number, page: number): Promise<Feed>
+  getFeed({ limit, page, search, authorId, categoryId }: { limit: number, page: number, search?: string, authorId?: string, categoryId?: string }): Promise<Feed>
   createPost(createPostPayload: CreatePostRequest): Promise<PostSchema>
-  deletePost(postId: string): Promise<void>
+  deletePost(postId: string, authorId: string): Promise<void>
   getPostById(postId: string): Promise<PostWithMeta>
   getPostBySlug(slug: string): Promise<PostWithMeta>
 }
 
 const postService: PostService = {
-  async getFeed(limit, page) {
-    const offset = page * limit;
-    const result = await postRepository.getFeed(limit, offset);
+  async getFeed({ limit, page, search, authorId, categoryId }) {
+    const offset = (limit * (page - 1));
+    const result = await postRepository.getFeed({ limit, offset, search, authorId, categoryId });
     return {
       data: result.data,
       meta: {
@@ -26,12 +25,17 @@ const postService: PostService = {
   },
   async createPost(createPostPayload) {
     const slug = generateSlug(createPostPayload.title);
-    const author = await userService.findUserById(createPostPayload.authorId);
-    if (!author) throw new NotFoundError('Author not found');
+    const existingPost = await postRepository.getPostBySlug(slug);
+    if (existingPost) {
+      throw new ConflictError(`Post with title ${createPostPayload.title} already exists`);
+    }
     return postRepository.createPost({ ...createPostPayload, slug });
   },
-  async deletePost(postId) {
+  async deletePost(postId, authorId) {
     const post = await postRepository.getPostById(postId);
+    if (post.authorId !== authorId) {
+      throw new ForbiddenError();
+    }
     if (!post) {
       throw new NotFoundError('Post not found');
     }

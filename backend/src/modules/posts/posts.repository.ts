@@ -2,18 +2,18 @@ import pool from "../../database/pool.service.js"
 import { PostForFeed, PostWithMeta, CreatePostPayload, PostSchema } from "./posts.types.js"
 
 interface PostRepository {
-  getFeed(limit: number, offset: number, categoryId?: string): Promise<{ data: PostForFeed[], total: number }>
+  getFeed({ limit, offset, search, authorId, categoryId }: { limit: number, offset: number, search?: string, authorId?: string, categoryId?: string }): Promise<{ data: PostForFeed[], total: number }>
   createPost(createPostPayload: CreatePostPayload): Promise<PostSchema>
   deletePost(postId: string): Promise<void>
   getPostById(postId: string): Promise<PostWithMeta>
   getPostBySlug(slug: string): Promise<PostWithMeta>
 }
 const postRepository: PostRepository = {
-  async createPost({ authorId, title, content, slug, categoryId }) {
+  async createPost({ authorId, title, content, slug, categoryId, description }) {
     const result = await pool.query(`
       INSERT INTO posts
-        (author_id, title, slug, content, category_id)
-        VALUES ($1, $2, $3, $4, $5)
+        (author_id, title, slug, content, category_id, description)
+        VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING
         post_id AS "postId",
         author_id AS "authorId",
@@ -21,7 +21,7 @@ const postRepository: PostRepository = {
         created_at AS "createdAt",
         updated_at AS "updatedAt",
         title, slug, content, description`
-      , [authorId, title, slug, content, categoryId ?? null]);
+      , [authorId, title, slug, content, categoryId ?? null, description]);
     return result.rows[0] as PostSchema;
   },
   async deletePost(postId) {
@@ -69,7 +69,24 @@ const postRepository: PostRepository = {
       `, [slug]);
     return result.rows[0] as PostWithMeta;
   },
-  async getFeed(limit, offset, categoryId) {
+  async getFeed({ limit, offset, categoryId, authorId, search }) {
+    const whereClauseArray = [];
+    const queryArray: Array<string | number> = [limit, offset];
+    if (authorId) {
+      queryArray.push(authorId);
+      whereClauseArray.push(`p.author_id = $${queryArray.length}`);
+    }
+    if (categoryId) {
+      queryArray.push(categoryId)
+      whereClauseArray.push(`c.category_id = $${queryArray.length}`);
+    }
+    if (search) {
+      queryArray.push(`%${search}%`);
+      whereClauseArray.push(`(p.title ILIKE $${queryArray.length} OR u.username ILIKE $${queryArray.length})`);
+    }
+    const whereClause = whereClauseArray.length
+      ? `WHERE ${whereClauseArray.join(' AND ')}`
+      : '';
     const result = await pool.query(`
       SELECT
         p.post_id AS "postId",
@@ -80,18 +97,19 @@ const postRepository: PostRepository = {
         p.title, p.slug, p.description,
         u.username AS "authorName",
         COALESCE(COUNT(pl.post_id), 0)::int AS "likes",
-        c.name AS "categoryName"
+        c.name AS "categoryName",
         COUNT(*) OVER() AS "total"
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.user_id
       LEFT JOIN post_likes pl ON p.post_id = pl.post_id
       LEFT JOIN categories c ON p.category_id = c.category_id
+      ${whereClause}
       GROUP BY p.post_id, u.user_id, c.category_id
       ORDER BY p.created_at DESC
       LIMIT $1 OFFSET $2
-      `, [limit, offset]);
+      `, queryArray);
 
-    const total = result.rows[0].total ?? 0;
+    const total = result.rows[0]?.total ?? 0;
     return { data: result.rows as PostForFeed[], total };
   }
 }

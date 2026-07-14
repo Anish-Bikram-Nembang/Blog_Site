@@ -7,6 +7,6 @@ const router = Router();
 router.get('/feed', postController.getFeed);
 router.post('/', authMiddleware, postController.createPost)
 router.get('/:slug', postController.getPostBySlug);
-router.delete('/:id', authMiddleware, postController.deletePost)
+router.delete('/:postId', authMiddleware, postController.deletePost)
 
 export default router;
