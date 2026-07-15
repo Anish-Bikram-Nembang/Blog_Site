@@ -10,10 +10,19 @@ http:
     type: json
     data: |-
       {
-        "username": "Enkoki",
-          "password": "cannotDefeatOrinOfWater"
+        "username": "Enkoki4",
+         "password": "cannotDefeatOrinOfWater"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const accessToken = res.body.accessToken;
+        const userId = res.body.user_id;
+        bru.setVar("userId",userId);
+        bru.setVar("accessToken", accessToken);
 
 settings:
   encodeUrl: true

@@ -1,0 +1,7 @@
+info:
+  name: comment-likes
+  type: folder
+  seq: 6
+
+request:
+  auth: inherit

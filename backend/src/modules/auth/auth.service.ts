@@ -26,7 +26,6 @@ const authService: AuthService = {
     return { user, accessToken: token };
   },
   async login(payload) {
-    console.log("Login payload:", payload);
     const existingUser = await userService.findUserByUsername(payload.username);
     if (!existingUser) {
       throw new UnauthorizedError("Invalid credentials");

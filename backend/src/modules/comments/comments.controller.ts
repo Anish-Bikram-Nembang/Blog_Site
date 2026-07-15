@@ -5,16 +5,16 @@ import { ValidationError, UnauthorizedError } from "../../errors/errors.js";
 const commentController = {
   async getCommentsByPostId(req: Request, res: Response) {
     const { postId } = req.params;
-    const { limit, offset } = req.query;
+    const { limit, page } = req.query;
     const limitNum = Number(limit);
-    const offsetNum = Number(offset);
-    if (Number.isNaN(limitNum) || Number.isNaN(offsetNum)) {
+    const pageNum = Number(page);
+    if (Number.isNaN(limitNum) || Number.isNaN(pageNum)) {
       throw new ValidationError("limit and offset must be valid numbers");
     }
     if (typeof postId !== 'string') {
       throw new ValidationError("postId should be a string");
     }
-    const result = await commentService.getCommentsByPostId(postId, Number(limit), Number(offset));
+    const result = await commentService.getCommentsByPostId(postId, limitNum, pageNum);
     res.send(result);
   },
   async postComment(req: Request, res: Response) {
@@ -44,8 +44,8 @@ const commentController = {
     if (!authorId) {
       throw new UnauthorizedError();
     }
-    const result = await commentService.removeComment(commentId, authorId);
-    res.send(result);
+    await commentService.removeComment(commentId, authorId);
+    res.status(204).send();
   }
 }
 export default commentController;

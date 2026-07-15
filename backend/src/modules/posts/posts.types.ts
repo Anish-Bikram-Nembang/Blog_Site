@@ -6,8 +6,8 @@ export interface PostSchema {
   slug: string;
   content: string;
   categoryId?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreatePostRequest {

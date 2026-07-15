@@ -1,0 +1,31 @@
+info:
+  name: post
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{baseUrl}}/posts/"
+  body:
+    type: json
+    data: |-
+      {
+        "title": "helloworld343",
+        "content": "rijan cannot defeat orin or water",
+        "categoryId": "{{categoryId}}",
+        "description": "rijan's real name is Enkoki"
+      }
+  auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const postId = res.body.postId;
+        bru.setVar("postId",postId);
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,11 +1,25 @@
 import { Request, Response } from "express";
 import categoriesService from "./categories.service.js";
-import { NotFoundError } from "../../errors/errors.js";
+import { NotFoundError, ValidationError } from "../../errors/errors.js";
 
 const categoriesController = {
+  async createCategory(req: Request, res: Response) {
+    const { name } = req.body;
+    if (!name) {
+      throw new ValidationError("Category name is required");
+    }
+    const category = await categoriesService.createCategory(name);
+    res.status(201).json(category);
+  },
   async getAllCategories(_req: Request, res: Response) {
     const categories = await categoriesService.getAllCategories();
-    res.json(categories);
+    const response = {
+      data: categories,
+      meta: {
+        total: categories.length
+      }
+    }
+    res.json(response);
   },
   async getCategoryById(req: Request, res: Response) {
     const { categoryId } = req.params;
