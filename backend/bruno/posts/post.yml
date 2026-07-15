@@ -10,11 +10,19 @@ http:
     type: json
     data: |-
       {
-        "title": "rijan",
+        "title": "helloworld343",
         "content": "rijan cannot defeat orin or water",
+        "categoryId": "{{categoryId}}",
         "description": "rijan's real name is Enkoki"
       }
   auth: inherit
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const postId = res.body.postId;
+        bru.setVar("postId",postId);
 
 settings:
   encodeUrl: true

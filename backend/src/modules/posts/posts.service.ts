@@ -33,11 +33,11 @@ const postService: PostService = {
   },
   async deletePost(postId, authorId) {
     const post = await postRepository.getPostById(postId);
-    if (post.authorId !== authorId) {
-      throw new ForbiddenError();
-    }
     if (!post) {
       throw new NotFoundError('Post not found');
+    }
+    if (post.authorId !== authorId) {
+      throw new ForbiddenError();
     }
     return postRepository.deletePost(postId);
   },
