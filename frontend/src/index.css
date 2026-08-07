@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@theme {
+  --color-light-bg: #F8F6F1;
+  --color-light-surface: #FFFFFF;
+  --color-light-surface-hover: #FEFCFA;
+  --color-light-subtle: #EEEAE3;
+  --color-text-primary: #1A1815;
+  --color-text-secondary: #6B6660;
+}
+
 html,
 body,
 #root {
@@ -10,5 +19,6 @@ body,
 }
 
 body {
-  background-color: #1c1c21;
+  background-color: var(--color-light-bg);
+  color: var(--color-text-primary);
 }
