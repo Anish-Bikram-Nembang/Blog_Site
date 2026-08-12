@@ -1,7 +1,7 @@
 import userRepository from "./users.repository.js";
 import { CreateUserPayload, User, UserSchema } from "./users.types.js";
 
-interface UserService {
+export interface UserService {
   findUserById(userId: string): Promise<User>;
   findUserByUsername(username: string): Promise<UserSchema | null>;
   createUser(createUserPayload: CreateUserPayload): Promise<User>;
