@@ -1,20 +1,67 @@
-import userRepository from "./users.repository.js";
-import { CreateUserPayload, User, UserSchema } from "./users.types.js";
+import { UserEntity } from "../../database/types/user.entity.js";
+import { UserRepository } from "./users.repository.js";
+import { CreateUserPayload, User } from "./users.types.js";
 
 export interface UserService {
-  findUserById(userId: string): Promise<User>;
-  findUserByUsername(username: string): Promise<UserSchema | null>;
+  findUserForAuth(identifier: string): Promise<UserEntity | null>
+  findUserByEmail(email: string): Promise<User | null>;
+  findUserById(userId: string): Promise<User | null>;
+  findUserByUsername(username: string): Promise<User | null>;
   createUser(createUserPayload: CreateUserPayload): Promise<User>;
 }
-const userService: UserService = {
-  async findUserById(userId) {
-    return userRepository.findUserById(userId);
-  },
-  async findUserByUsername(username) {
-    return userRepository.findUserByUsername(username);
-  },
-  async createUser(createUserPayload) {
-    return userRepository.createUser(createUserPayload);
+export interface UserServiceDeps {
+  userRepository: {
+    findUserById: UserRepository['findUserById'];
+    findUserByEmail: UserRepository['findUserByEmail'];
+    findUserByUsernameOrEmail: UserRepository['findUserByUsernameOrEmail'];
+    findUserByUsername: UserRepository['findUserByUsername'];
+    createUser: UserRepository['createUser'];
   }
 }
-export default userService
+export default function createUserService(deps: UserServiceDeps): UserService {
+  return {
+    findUserForAuth(identifier) {
+      return deps.userRepository.findUserByUsernameOrEmail(identifier);
+    },
+    async findUserByEmail(email) {
+      const userEntity = await deps.userRepository.findUserByEmail(email);
+      if (!userEntity) {
+        return null;
+      }
+      const user = mapUserEntityToUser(userEntity);
+      return user;
+    },
+    async findUserById(userId) {
+      const userEntity = await deps.userRepository.findUserById(userId);
+      if (!userEntity) {
+        return null;
+      }
+      const user = mapUserEntityToUser(userEntity);
+      return user;
+    },
+    async findUserByUsername(username) {
+      const userEntity = await deps.userRepository.findUserByUsername(username);
+      if (!userEntity) {
+        return null;
+      }
+      const user = mapUserEntityToUser(userEntity);
+      return user;
+    },
+    async createUser(createUserPayload) {
+      const userEntity = await deps.userRepository.createUser(createUserPayload);
+      const user = mapUserEntityToUser(userEntity);
+      return user;
+
+    }
+  }
+}
+
+function mapUserEntityToUser(userEntity: UserEntity): User {
+  return {
+    userId: userEntity.userId,
+    username: userEntity.username,
+    email: userEntity.email,
+    displayName: userEntity.displayName,
+    avatarUrl: userEntity.avatarUrl
+  }
+}

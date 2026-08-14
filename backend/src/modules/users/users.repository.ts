@@ -1,34 +1,107 @@
+import { DatabaseError } from "pg";
 import pool from "../../database/pool.service.js"
-import { CreateUserPayload, User, UserSchema } from "./users.types.js"
+import { CreateUserPayload } from "./users.types.js"
+import { ConflictError } from "../../errors/errors.js";
+import { UserEntity } from "../../database/types/user.entity.js";
 
-interface UserRepository {
-  createUser(createUserPayload: CreateUserPayload): Promise<User>
-  findUserById(userId: string): Promise<User>;
-  findUserByUsername(username: string): Promise<UserSchema | null>
+export interface UserRepository {
+  findUserByEmail(email: string): Promise<UserEntity | null>
+  createUser(createUserPayload: CreateUserPayload): Promise<UserEntity>
+  findUserById(userId: string): Promise<UserEntity | null>;
+  findUserByUsername(username: string): Promise<UserEntity | null>
+  findUserByUsernameOrEmail(userNameOrEmail: string): Promise<UserEntity | null>
 }
 const userRepository: UserRepository = {
   async createUser(createUserPayload) {
-    const result = await pool.query(
-      `INSERT INTO users (username, hashed_password)
-       VALUES ($1, $2) RETURNING user_id, username`
-      , [createUserPayload.username.toLowerCase(), createUserPayload.hashedPassword]);
-    const user = result.rows[0];
-    return user as User;
+    try {
+      const result = await pool.query<UserEntity>(`
+        INSERT INTO users (username, email, hashed_password)
+        VALUES ($1, $2, $3)
+        RETURNING
+        user_id AS "userId",
+        username,
+        email,
+        hashed_password AS "hashedPassword",
+        display_name AS "displayName",
+        avatar_url AS "avatarUrl",
+        created_at AS "createdAt",
+        updated_at AS "updatedAt"`
+        , [createUserPayload.username.toLowerCase(), createUserPayload.email, createUserPayload.hashedPassword]);
+      const user = result.rows[0];
+      return user;
+    } catch (e) {
+      if (e instanceof DatabaseError && e.code === "23505") {
+        if (e.constraint === "users_username_key") {
+          throw new ConflictError("Username already exists");
+        }
+
+        if (e.constraint === "users_email_key") {
+          throw new ConflictError("Email already exists");
+        }
+      }
+      throw e;
+
+    }
+  },
+  async findUserByUsernameOrEmail(userNameOrEmail) {
+    const result = await pool.query<UserEntity>(`
+      SELECT
+      user_id AS "userId",
+      username,
+      email,
+      hashed_password AS "hashedPassword",
+      display_name AS "displayName",
+      avatar_url AS "avatarUrl",
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+      FROM users WHERE user_id = $1 OR email = $1 LIMIT 1`, [userNameOrEmail]
+    );
+    return result.rows[0] ?? null;
   },
   async findUserById(userId) {
-    const result = await pool.query(
-      `SELECT username, user_id AS "userId", hashed_password AS "hashedPassword" FROM users WHERE user_id = $1 LIMIT 1`, [userId]
+    const result = await pool.query<UserEntity>(`
+      SELECT
+      user_id AS "userId",
+      username,
+      email,
+      hashed_password AS "hashedPassword",
+      display_name AS "displayName",
+      avatar_url AS "avatarUrl",
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+      FROM users WHERE user_id = $1 LIMIT 1`, [userId]
     );
-    return result.rows[0] as User;
+    return result.rows[0] ?? null;
+  },
+  async findUserByEmail(email) {
+    const result = await pool.query<UserEntity>(`
+      SELECT
+      user_id AS "userId",
+      username,
+      email,
+      hashed_password AS "hashedPassword",
+      display_name AS "displayName",
+      avatar_url AS "avatarUrl",
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+      FROM users WHERE email = $1 LIMIT 1`, [email]
+    );
+    return result.rows[0] ?? null;
   },
   async findUserByUsername(username) {
-    const lowercasedUsername = username.toLowerCase();
-    const result = await pool.query(
-      `SELECT username, user_id AS "userId", hashed_password AS "hashedPassword" FROM users WHERE username = $1 LIMIT 1`
-      , [lowercasedUsername]
-    )
-    const user: UserSchema = result.rows[0];
-    return user ?? null;
+    const result = await pool.query<UserEntity>(`
+      SELECT
+      user_id AS "userId",
+      username,
+      email,
+      hashed_password AS "hashedPassword",
+      display_name AS "displayName",
+      avatar_url AS "avatarUrl",
+      created_at AS "createdAt",
+      updated_at AS "updatedAt"
+      FROM users WHERE username = $1 LIMIT 1`, [username]
+    );
+    return result.rows[0] ?? null;
   }
 
 }
