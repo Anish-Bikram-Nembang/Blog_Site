@@ -20,8 +20,12 @@ export interface UserServiceDeps {
 }
 export default function createUserService(deps: UserServiceDeps): UserService {
   return {
-    findUserForAuth(identifier) {
-      return deps.userRepository.findUserByUsernameOrEmail(identifier);
+    async findUserForAuth(identifier) {
+      const userEntity = await deps.userRepository.findUserByUsernameOrEmail(identifier);
+      if (!userEntity) {
+        return null;
+      }
+      return userEntity;
     },
     async findUserByEmail(email) {
       const userEntity = await deps.userRepository.findUserByEmail(email);
