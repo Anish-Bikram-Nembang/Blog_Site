@@ -1,18 +1,17 @@
-import { LoginRequest, SignUpRequest } from "./auth.types.js";
+import { AuthResponse, LoginRequest, SignUpRequest } from "./auth.types.js";
 import bcrypt from "bcrypt";
 import { UserService } from "../users/users.service.js"
 import jwt from "jsonwebtoken"
-import { User } from "../users/users.types.js";
-import { ConflictError, UnauthorizedError } from "../../errors/errors.js";
+import { UnauthorizedError } from "../../errors/errors.js";
 
 export interface AuthService {
-  signup(payload: SignUpRequest): Promise<{ user: User, accessToken: string }>
-  login(payload: LoginRequest): Promise<{ user: User, accessToken: string }>
+  signup(payload: SignUpRequest): Promise<AuthResponse>
+  login(payload: LoginRequest): Promise<AuthResponse>
 
 }
 export interface AuthDeps {
   userService: {
-    findUserByUsername: UserService['findUserByUsername'];
+    findUserForAuth: UserService['findUserForAuth'];
     createUser: UserService['createUser'];
   };
   config: {
@@ -24,12 +23,8 @@ export interface AuthDeps {
 export default function createAuthService(deps: AuthDeps): AuthService {
   return {
     async signup(payload) {
-      const existingUser = await deps.userService.findUserByUsername(payload.username);
-      if (existingUser) {
-        throw new ConflictError("Username already exists")
-      }
       const hashedPassword = await bcrypt.hash(payload.password, deps.config.saltRounds)
-      const user = await deps.userService.createUser({ username: payload.username, hashedPassword });
+      const user = await deps.userService.createUser({ username: payload.username, email: payload.email, hashedPassword });
       const token = jwt.sign(
         { userId: user.userId, username: user.username },
         deps.config.jwtSecret,
@@ -37,7 +32,7 @@ export default function createAuthService(deps: AuthDeps): AuthService {
       return { user, accessToken: token };
     },
     async login(payload) {
-      const existingUser = await deps.userService.findUserByUsername(payload.username);
+      const existingUser = await deps.userService.findUserForAuth(payload.identifier);
       if (!existingUser) {
         throw new UnauthorizedError("Invalid credentials");
       }
@@ -51,7 +46,14 @@ export default function createAuthService(deps: AuthDeps): AuthService {
         { expiresIn: '7d' })
 
       return {
-        user: { userId: existingUser.userId, username: existingUser.username },
+        user: {
+          userId: existingUser.userId,
+          username: existingUser.username,
+          email: existingUser.email,
+          displayName: existingUser.displayName,
+          avatarUrl: existingUser.avatarUrl,
+
+        },
         accessToken: token,
       }
     }
