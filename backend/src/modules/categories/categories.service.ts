@@ -1,7 +1,12 @@
 import { CategoriesRepository } from "./categories.repository.js"
 
 export interface CategoriesServiceDeps {
-  categoriesRepository: CategoriesRepository;
+  categoriesRepository: {
+    createCategory: CategoriesRepository['createCategory'];
+    getAllCategories: CategoriesRepository['getAllCategories'];
+    getCategoryById: CategoriesRepository['getCategoryById'];
+    getCategoryByName: CategoriesRepository['getCategoryByName'];
+  }
 }
 
 export default function createCategoriesService(deps: CategoriesServiceDeps) {
