@@ -1,14 +1,13 @@
+import { DatabaseError } from "pg";
 import pool from "../../database/pool.service.js"
+import { ConflictError } from "../../errors/errors.js";
+import { CategoryEntity } from "../../database/types/category.entity.js";
 
-interface Category {
-  categoryId: string;
-  name: string;
-}
-interface CategoriesRepository {
-  getCategoryByName(categoryName: string): Promise<Category | null>
-  createCategory(categoryName: string): Promise<Category>
-  getAllCategories(): Promise<Category[]>
-  getCategoryById(id: string): Promise<Category | null>
+export interface CategoriesRepository {
+  getCategoryByName(categoryName: string): Promise<CategoryEntity | null>
+  createCategory(categoryName: string): Promise<CategoryEntity>
+  getAllCategories(): Promise<CategoryEntity[]>
+  getCategoryById(id: string): Promise<CategoryEntity | null>
 }
 
 const categoriesRepository: CategoriesRepository = {
@@ -23,12 +22,23 @@ const categoriesRepository: CategoriesRepository = {
     return result.rows[0] ?? null;
   },
   async createCategory(categoryName: string) {
-    const result = await pool.query(`
+    try {
+      const result = await pool.query(`
       INSERT INTO categories (name)
       VALUES ($1) RETURNING category_id AS "categoryId",
       name
     `, [categoryName]);
-    return result.rows[0];
+      return result.rows[0];
+
+    } catch (e) {
+      if (e instanceof DatabaseError && e.code === "23505") {
+        if (e.constraint === "categories_name_key") {
+          throw new ConflictError(`Category ${categoryName} already exists`);
+        }
+      }
+      throw e;
+
+    }
   },
   async getAllCategories() {
     const result = await pool.query(`

@@ -1,19 +1,36 @@
-import { ConflictError } from "../../errors/errors.js";
-import categoriesRepository from "./categories.repository.js"
+import { CategoriesRepository } from "./categories.repository.js"
 
-const categoriesService = {
-  async createCategory(categoryName: string) {
-    const existingCategory = await categoriesRepository.getCategoryByName(categoryName);
-    if (existingCategory) {
-      throw new ConflictError(`Category with name ${categoryName} already exists`);
+export interface CategoriesServiceDeps {
+  categoriesRepository: CategoriesRepository;
+}
+
+export default function createCategoriesService(deps: CategoriesServiceDeps) {
+  return {
+    async createCategory(categoryName: string) {
+      return deps.categoriesRepository.createCategory(categoryName);
+    },
+    async getAllCategories() {
+      const categories = await deps.categoriesRepository.getAllCategories();
+      return {
+        data: categories,
+        meta: {
+          total: categories.length
+        }
+      }
+    },
+    async getCategoryByName(categoryName: string) {
+      const category = await deps.categoriesRepository.getCategoryByName(categoryName);
+      if (!category) {
+        return null;
+      }
+      return category
+    },
+    async getCategoryById(categoryId: string) {
+      const category = await deps.categoriesRepository.getCategoryById(categoryId);
+      if (!category) {
+        return null;
+      }
+      return category
     }
-    return categoriesRepository.createCategory(categoryName);
-  },
-  getAllCategories() {
-    return categoriesRepository.getAllCategories();
-  },
-  getCategoryById(categoryId: string) {
-    return categoriesRepository.getCategoryById(categoryId);
   }
 }
-export default categoriesService;

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import categoriesService from "./categories.service.js";
+import categoriesService from "./categories.service.instance.js";
 import { NotFoundError, ValidationError } from "../../errors/errors.js";
 
 const categoriesController = {
@@ -12,13 +12,7 @@ const categoriesController = {
     res.status(201).json(category);
   },
   async getAllCategories(_req: Request, res: Response) {
-    const categories = await categoriesService.getAllCategories();
-    const response = {
-      data: categories,
-      meta: {
-        total: categories.length
-      }
-    }
+    const response = await categoriesService.getAllCategories();
     res.json(response);
   },
   async getCategoryById(req: Request, res: Response) {
