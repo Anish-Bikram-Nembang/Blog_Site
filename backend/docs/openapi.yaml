@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: Blog API
+  version: 0.0.0
+  description: API for Personal Blog platform
+servers:
+  - url: http://localhost:3000/api
+paths: {}
+components:
+  schemas: {}
