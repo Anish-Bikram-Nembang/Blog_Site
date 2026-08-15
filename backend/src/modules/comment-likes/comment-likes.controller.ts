@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import commentLikeService from "./comment-likes.service.js";
+import commentLikeService from "./comment-likes.service.instance.js";
 import { UnauthorizedError, ValidationError } from "../../errors/errors.js";
 
 const commentLikeController = {
