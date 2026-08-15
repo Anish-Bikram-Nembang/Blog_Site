@@ -8,7 +8,6 @@ describe('commentLikesService', () => {
     mockedCommentLikesRepository: jest.Mocked<CommentLikesServiceDeps['commentLikesRepository']>
   } {
     const mockedCommentLikesRepository: jest.Mocked<CommentLikesServiceDeps['commentLikesRepository']> = {
-      getLike: jest.fn(),
       deleteLike: jest.fn(),
       createLike: jest.fn(),
       ...overrides
@@ -60,7 +59,7 @@ describe('commentLikesService', () => {
     });
     it('should throw NotFoundError when the commentLike is not found', async () => {
       const { api } = makeCommentLikesService({
-        deleteLike: jest.fn<CommentLikesServiceDeps['commentLikesRepository']['getLike']>().mockResolvedValue(null),
+        deleteLike: jest.fn<CommentLikesServiceDeps['commentLikesRepository']['deleteLike']>().mockResolvedValue(null),
       });
       await expect(api.deleteLike('USER_ID', 'COMMENT_ID')).rejects.toThrow(NotFoundError);
 

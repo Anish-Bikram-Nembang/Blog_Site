@@ -6,7 +6,10 @@ export interface CommentLikesService {
   deleteLike(authorId: string, commentId: string): Promise<CommentLikeEntity>
 }
 export interface CommentLikesServiceDeps {
-  commentLikesRepository: CommentLikesRepository;
+  commentLikesRepository: {
+    createLike: CommentLikesRepository['createLike'];
+    deleteLike: CommentLikesRepository['deleteLike'];
+  }
 }
 
 export default function createCommentLikesService(deps: CommentLikesServiceDeps): CommentLikesService {
