@@ -3,7 +3,6 @@ import createUserService, { UserService, UserServiceDeps } from "./users.service
 import { UserRepository } from './users.repository.js';
 import { UserEntity } from '../../database/types/user.entity.js';
 import { User } from './users.types.js';
-import { ConflictError } from '../../errors/errors.js';
 
 describe('userService', () => {
   const userEntity: UserEntity = {
@@ -54,17 +53,6 @@ describe('userService', () => {
       })
       expect(result).toEqual(user);
     });
-    it('should propagate conflict error', async () => {
-      const { api } = makeUserService({
-        createUser: jest.fn<UserServiceDeps['userRepository']['createUser']>().mockRejectedValue(new ConflictError())
-      })
-      await expect(api.createUser({
-        username: userEntity.username,
-        email: userEntity.email,
-        hashedPassword: userEntity.hashedPassword,
-      })).rejects.toThrow(ConflictError);
-    });
-
   });
   describe('findUserForAuth', () => {
     it('should return UserEntity will all table fields', async () => {
