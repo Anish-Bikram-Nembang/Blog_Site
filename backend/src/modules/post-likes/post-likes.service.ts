@@ -1,27 +1,30 @@
-import { ConflictError, NotFoundError } from "../../errors/errors.js"
-import postLikesRepository from "./post-likes.repository.js"
-import { PostLike } from "./post-likes.types.js"
+import { PostLikeEntity } from "../../database/types/post-like.entity.js"
+import { NotFoundError } from "../../errors/errors.js"
+import { PostLikesRepository } from "./post-likes.repository.js"
 
-interface PostLikeService {
-  createLike(authorId: string, postId: string): Promise<PostLike>
-  deleteLike(authorId: string, postId: string): Promise<PostLike>
+export interface PostLikesService {
+  createLike(authorId: string, postId: string): Promise<PostLikeEntity>
+  deleteLike(authorId: string, postId: string): Promise<PostLikeEntity>
 }
-
-const postLikeService: PostLikeService = {
-  async createLike(authorId, postId) {
-    const existingLike = await postLikesRepository.getLike(authorId, postId);
-    if (existingLike) {
-      throw new ConflictError("Like already exists");
-    }
-    return postLikesRepository.createLike(authorId, postId);
-  },
-  async deleteLike(authorId, postId) {
-    const result = await postLikesRepository.deleteLike(authorId, postId);
-    if (!result) {
-      throw new NotFoundError("Like not found");
-    }
-    return result;
+export interface PostLikesServiceDeps {
+  postLikesRepository: {
+    createLike: PostLikesRepository['createLike'];
+    deleteLike: PostLikesRepository['deleteLike'];
   }
 }
 
-export default postLikeService;
+export default function createPostLikeService(deps: PostLikesServiceDeps): PostLikesService {
+  return {
+    async createLike(authorId, postId) {
+      return deps.postLikesRepository.createLike(authorId, postId);
+    },
+    async deleteLike(authorId, postId) {
+      const result = await deps.postLikesRepository.deleteLike(authorId, postId);
+      if (!result) {
+        throw new NotFoundError("Like not found");
+      }
+      return result;
+    }
+  }
+}
+

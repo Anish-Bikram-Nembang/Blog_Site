@@ -1,49 +1,67 @@
+import { DatabaseError } from "pg"
 import pool from "../../database/pool.service.js"
-import { PostLike } from "./post-likes.types.js"
+import { PostLikeEntity } from "../../database/types/post-like.entity.js"
+import { ConflictError, NotFoundError } from "../../errors/errors.js"
 
 
-interface PostLikesRepository {
-  createLike(authorId: string, postId: string): Promise<PostLike>
-  deleteLike(authorId: string, postId: string): Promise<PostLike | null>
-  getLike(authorId: string, postId: string): Promise<PostLike | null>
+export interface PostLikesRepository {
+  createLike(userId: string, postId: string): Promise<PostLikeEntity>
+  deleteLike(userId: string, postId: string): Promise<PostLikeEntity | null>
+  getLike(userId: string, postId: string): Promise<PostLikeEntity | null>
 }
 
 const postLikesRepository: PostLikesRepository = {
-  async createLike(authorId, postId) {
-    const result = await pool.query<PostLike>(`
+  async createLike(userId, postId) {
+    try {
+      const result = await pool.query<PostLikeEntity>(`
       INSERT INTO post_likes
-      (author_id, post_id)
+      (user_id, post_id)
       VALUES ($1, $2)
       RETURNING
-        author_id AS "authorId",
+        user_id AS "userId",
         post_id AS "postId",
         created_at AS "createdAt"
-      `, [authorId, postId]);
-    return result?.rows[0];
+      `, [userId, postId]);
+      return result.rows[0];
+    } catch (e) {
+      if (e instanceof DatabaseError) {
+        if (e.code === "23505" && e.constraint === "post_likes_pkey") {
+          throw new ConflictError("Like already exists");
+        }
+        if (e.code === "23503" && e.constraint === "post_likes_post_id_fkey") {
+          throw new NotFoundError("Post not found");
+        }
+        if (e.code === "23503" && e.constraint === "post_likes_user_id_fkey") {
+          throw new NotFoundError("User not found");
+        }
+      }
+      throw e;
+
+    }
   },
-  async getLike(authorId, postId) {
-    const result = await pool.query<PostLike>(`
+  async getLike(userId, postId) {
+    const result = await pool.query<PostLikeEntity>(`
       SELECT
-        author_id AS "authorId",
+        user_id AS "userId",
         post_id AS "postId",
         created_at AS "createdAt"
       FROM post_likes
-      WHERE author_id = $1
+      WHERE user_id = $1
       AND post_id = $2
-      `, [authorId, postId]);
-    return result?.rows[0] ?? null;
+      `, [userId, postId]);
+    return result.rows[0] ?? null;
   },
-  async deleteLike(authorId, postId) {
-    const result = await pool.query<PostLike>(`
+  async deleteLike(userId, postId) {
+    const result = await pool.query<PostLikeEntity>(`
       DELETE FROM post_likes
-      WHERE author_id = $1
+      WHERE user_id = $1
       AND post_id = $2
       RETURNING
-        author_id AS "authorId",
+        user_id AS "userId",
         post_id AS "postId",
         created_at AS "createdAt"
-      `, [authorId, postId]);
-    return result?.rows[0] ?? null;
+      `, [userId, postId]);
+    return result.rows[0] ?? null;
   }
 }
 export default postLikesRepository;

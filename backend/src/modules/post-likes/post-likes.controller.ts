@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import postLikeService from "./post-likes.service.js";
+import postLikesService from "./post-likes.service.instance.js";
 import { ValidationError, NotFoundError } from "../../errors/errors.js";
 
 const postLikeController = {
@@ -12,7 +12,7 @@ const postLikeController = {
     if (typeof postId !== "string") {
       throw new NotFoundError();
     }
-    const result = await postLikeService.createLike(userId, postId);
+    const result = await postLikesService.createLike(userId, postId);
     res.status(200).json(result);
   },
   async unlike(req: Request, res: Response) {
@@ -24,7 +24,7 @@ const postLikeController = {
     if (typeof postId !== "string") {
       throw new NotFoundError();
     }
-    const result = await postLikeService.deleteLike(userId, postId);
+    const result = await postLikesService.deleteLike(userId, postId);
     res.status(204).json(result);
   }
 }
