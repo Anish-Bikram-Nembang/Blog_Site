@@ -1,41 +1,34 @@
-export interface PostSchema {
-  postId: string;
+import { PostEntity } from "../../database/types/post.entity.js";
+
+export interface CreatePostPayload {
   authorId: string;
-  description: string;
   title: string;
   slug: string;
   content: string;
   categoryId?: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CreatePostRequest {
-  authorId: string;
-  title: string;
-  content: string;
-  categoryId?: string;
   description: string;
 }
+export type CreatePostRequest = Omit<CreatePostPayload, 'slug'>;
 
-export interface CreatePostPayload extends CreatePostRequest {
-  slug: string;
+export interface Post extends PostEntity {
+  authorName: string;
+  categoryName: string | null;
+  likeCount: number;
+  commentCount: number;
+  isLiked: boolean;
 }
-export interface Feed {
-  data: PostForFeed[];
+
+export type PostForFeed = Omit<Post, 'commentCount' | 'content'>;
+export type PostForFeedRow = PostForFeed & { total: number };
+
+export interface FeedResponse {
+  data: PostForFeed[]
   meta: {
+    total: number;
     page: number;
     limit: number;
-    total: number
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
   }
 }
-export type PostWithoutContent = Omit<PostSchema, 'content'>;
-export interface PostForFeed extends PostWithoutContent {
-  authorName: string;
-  categoryName?: string;
-  likes: number
-}
 
-export interface PostWithMeta extends PostForFeed {
-  content: string;
-}

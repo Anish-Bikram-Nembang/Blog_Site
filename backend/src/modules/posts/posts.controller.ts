@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import postService from "./posts.service.js";
+import postService from "./posts.service.instance.js";
 import { UnauthorizedError } from "../../errors/errors.js";
 import { asNumber, asString, requireString } from "../../utils/typeValidators.js";
 
@@ -12,7 +12,8 @@ const postController = {
       categoryId: asString(req.query.categoryId),
       search: asString(req.query.search),
     }
-    const result = await postService.getFeed(queries);
+    const userId = req.user?.userId;
+    const result = await postService.getFeed(queries, userId);
     res.status(200).json(result);
   },
   async createPost(req: Request, res: Response) {
@@ -34,12 +35,14 @@ const postController = {
   },
   async getPostById(req: Request, res: Response) {
     const { postId } = req.params;
-    const result = await postService.getPostById(String(postId));
+    const userId = req.user?.userId;
+    const result = await postService.getPostById(String(postId), userId);
     res.status(200).json(result);
   },
   async getPostBySlug(req: Request, res: Response) {
     const { slug } = req.params;
-    const result = await postService.getPostBySlug(String(slug));
+    const userId = req.user?.userId;
+    const result = await postService.getPostBySlug(String(slug), userId);
     res.status(200).json(result);
   }
 }

@@ -1,16 +1,17 @@
 import pool from "../../database/pool.service.js"
-import { PostForFeed, PostWithMeta, CreatePostPayload, PostSchema } from "./posts.types.js"
+import { PostEntity } from "../../database/types/post.entity.js"
+import { CreatePostPayload, Post, PostForFeedRow } from "./posts.types.js"
 
-interface PostRepository {
-  getFeed({ limit, offset, search, authorId, categoryId }: { limit: number, offset: number, search?: string, authorId?: string, categoryId?: string }): Promise<{ data: PostForFeed[], total: number }>
-  createPost(createPostPayload: CreatePostPayload): Promise<PostSchema>
-  deletePost(postId: string): Promise<void>
-  getPostById(postId: string): Promise<PostWithMeta>
-  getPostBySlug(slug: string): Promise<PostWithMeta>
+export interface PostRepository {
+  getFeed({ limit, offset, search, authorId, categoryId }: { limit: number, offset: number, search?: string, authorId?: string, categoryId?: string }, currentUserId: string | undefined): Promise<PostForFeedRow[]>
+  createPost(createPostPayload: CreatePostPayload): Promise<PostEntity>
+  deletePost(postId: string, authorId: string): Promise<PostEntity | null>
+  getPostById(postId: string, currentUserId: string | undefined): Promise<Post>
+  getPostBySlug(slug: string, currentUserId: string | undefined): Promise<Post>
 }
 const postRepository: PostRepository = {
   async createPost({ authorId, title, content, slug, categoryId, description }) {
-    const result = await pool.query(`
+    const result = await pool.query<PostEntity>(`
       INSERT INTO posts
         (author_id, title, slug, content, category_id, description)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -22,13 +23,14 @@ const postRepository: PostRepository = {
         updated_at AS "updatedAt",
         title, slug, content, description`
       , [authorId, title, slug, content, categoryId ?? null, description]);
-    return result.rows[0] as PostSchema;
+    return result.rows[0];
   },
-  async deletePost(postId) {
-    await pool.query(`DELETE FROM posts WHERE post_id=$1`, [postId]);
+  async deletePost(postId, authorId) {
+    const result = await pool.query<PostEntity>(`DELETE FROM posts WHERE post_id=$1 AND author_id=$2`, [postId, authorId]);
+    return result.rows[0] ?? null;
   },
-  async getPostById(postId) {
-    const result = await pool.query(`
+  async getPostById(postId, currentUserId) {
+    const result = await pool.query<Post>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -37,19 +39,22 @@ const postRepository: PostRepository = {
         p.updated_at AS "updatedAt",
         p.title, p.slug, p.content, p.description,
         u.username AS "authorName",
-        COALESCE(COUNT(pl.post_id), 0)::int AS "likes",
-        c.name AS "categoryName"
+        c.name AS "categoryName",
+        COALESCE(COUNT(DISTINCT(pl.user_id)), 0)::int AS "likeCount",
+        COALESCE(COUNT(DISTINCT(pc.comment_id)), 0)::int AS "commentCount",
+        EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = $2) AS "isLiked"
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.user_id
       LEFT JOIN post_likes pl ON p.post_id = pl.post_id
+      LEFT JOIN comments pc ON p.post_id = pc.post_id
       LEFT JOIN categories c ON p.category_id = c.category_id
       WHERE p.post_id=$1
       GROUP BY p.post_id, u.user_id, c.category_id
-      `, [postId]);
-    return result.rows[0] as PostWithMeta;
+      `, [postId, currentUserId ?? null]);
+    return result.rows[0] ?? null;
   },
-  async getPostBySlug(slug) {
-    const result = await pool.query(`
+  async getPostBySlug(slug, currentUserId) {
+    const result = await pool.query<Post>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -58,20 +63,23 @@ const postRepository: PostRepository = {
         p.updated_at AS "updatedAt",
         p.title, p.slug, p.content, p.description,
         u.username AS "authorName",
-        COALESCE(COUNT(pl.post_id), 0)::int AS "likes",
-        c.name AS "categoryName"
+        c.name AS "categoryName",
+        COALESCE(COUNT(DISTINCT(pl.user_id)), 0)::int AS "likeCount",
+        COALESCE(COUNT(DISTINCT(pc.comment_id)), 0)::int AS "commentCount",
+        EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = $2) AS "isLiked"
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.user_id
       LEFT JOIN post_likes pl ON p.post_id = pl.post_id
+      LEFT JOIN comments pc ON p.post_id = pc.post_id
       LEFT JOIN categories c ON p.category_id = c.category_id
-      WHERE p.slug = $1
+      WHERE p.slug=$1
       GROUP BY p.post_id, u.user_id, c.category_id
-      `, [slug]);
-    return result.rows[0] as PostWithMeta;
+      `, [slug, currentUserId ?? null]);
+    return result.rows[0] ?? null;
   },
-  async getFeed({ limit, offset, categoryId, authorId, search }) {
+  async getFeed({ limit, offset, categoryId, authorId, search }, currentUserId?) {
     const whereClauseArray = [];
-    const queryArray: Array<string | number> = [limit, offset];
+    const queryArray: Array<string | number | null> = [limit, offset, currentUserId ?? null];
     if (authorId) {
       queryArray.push(authorId);
       whereClauseArray.push(`p.author_id = $${queryArray.length}`);
@@ -87,7 +95,7 @@ const postRepository: PostRepository = {
     const whereClause = whereClauseArray.length
       ? `WHERE ${whereClauseArray.join(' AND ')}`
       : '';
-    const result = await pool.query(`
+    const result = await pool.query<PostForFeedRow>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -96,12 +104,15 @@ const postRepository: PostRepository = {
         p.updated_at AS "updatedAt",
         p.title, p.slug, p.description,
         u.username AS "authorName",
-        COALESCE(COUNT(pl.post_id), 0)::int AS "likes",
         c.name AS "categoryName",
-        COUNT(*) OVER() AS "total"
+        COALESCE(COUNT(DISTINCT(pl.user_id)), 0)::int AS "likeCount",
+        COALESCE(COUNT(DISTINCT(pc.comment_id)), 0)::int AS "commentCount",
+        COUNT(*) OVER() AS "total",
+        EXISTS (SELECT 1 FROM post_likes WHERE post_id = p.post_id AND user_id = $3) AS "isLiked"
       FROM posts p
       LEFT JOIN users u ON p.author_id = u.user_id
       LEFT JOIN post_likes pl ON p.post_id = pl.post_id
+      LEFT JOIN comments pc ON p.post_id = pc.post_id
       LEFT JOIN categories c ON p.category_id = c.category_id
       ${whereClause}
       GROUP BY p.post_id, u.user_id, c.category_id
@@ -109,8 +120,9 @@ const postRepository: PostRepository = {
       LIMIT $1 OFFSET $2
       `, queryArray);
 
-    const total = result.rows[0]?.total ?? 0;
-    return { data: result.rows as PostForFeed[], total };
+    return result.rows;
+
   }
 }
+
 export default postRepository;

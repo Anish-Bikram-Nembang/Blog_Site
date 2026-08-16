@@ -1,65 +1,63 @@
-import { CreatePostRequest, Feed, PostSchema, PostWithMeta } from "./posts.types.js"
-import postRepository from "./posts.repository.js"
-import { ConflictError, ForbiddenError, NotFoundError } from "../../errors/errors.js"
+import { CreatePostRequest, FeedResponse, Post } from "./posts.types.js"
+import { PostRepository } from "./posts.repository.js"
+import { NotFoundError } from "../../errors/errors.js"
+import { PostEntity } from "../../database/types/post.entity.js"
 
-interface PostService {
-  getFeed({ limit, page, search, authorId, categoryId }: { limit: number, page: number, search?: string, authorId?: string, categoryId?: string }): Promise<Feed>
-  createPost(createPostPayload: CreatePostRequest): Promise<PostSchema>
-  deletePost(postId: string, authorId: string): Promise<void>
-  getPostById(postId: string): Promise<PostWithMeta>
-  getPostBySlug(slug: string): Promise<PostWithMeta>
+export interface PostService {
+  getFeed({ limit, page, search, authorId, categoryId }: { limit: number, page: number, search?: string, authorId?: string, categoryId?: string }, currentUserId: string | undefined): Promise<FeedResponse>
+  createPost(createPostPayload: CreatePostRequest): Promise<PostEntity>
+  deletePost(postId: string, authorId: string): Promise<PostEntity>
+  getPostById(postId: string, currentUserId: string | undefined): Promise<Post | null>
+  getPostBySlug(slug: string, currentUserId: string | undefined): Promise<Post | null>
 }
-
-const postService: PostService = {
-  async getFeed({ limit, page, search, authorId, categoryId }) {
-    const offset = (limit * (page - 1));
-    const result = await postRepository.getFeed({ limit, offset, search, authorId, categoryId });
-    return {
-      data: result.data,
-      meta: {
-        total: result.total,
-        page,
-        limit,
-      }
-    }
-  },
-  async createPost(createPostPayload) {
-    const slug = generateSlug(createPostPayload.title);
-    const existingPost = await postRepository.getPostBySlug(slug);
-    if (existingPost) {
-      throw new ConflictError(`Post with title ${createPostPayload.title} already exists`);
-    }
-    return postRepository.createPost({ ...createPostPayload, slug });
-  },
-  async deletePost(postId, authorId) {
-    const post = await postRepository.getPostById(postId);
-    if (!post) {
-      throw new NotFoundError('Post not found');
-    }
-    if (post.authorId !== authorId) {
-      throw new ForbiddenError();
-    }
-    return postRepository.deletePost(postId);
-  },
-  async getPostById(postId) {
-    const post = await postRepository.getPostById(postId);
-    if (!post) {
-      throw new NotFoundError('Post not found');
-    }
-    return post;
-  },
-  async getPostBySlug(slug) {
-    const post = await postRepository.getPostBySlug(slug);
-    if (!post) {
-      throw new NotFoundError('Post not found');
-    }
-    return post;
+export interface PostServiceDeps {
+  postRepository: {
+    createPost: PostRepository['createPost'];
+    getPostById: PostRepository['getPostById'];
+    getPostBySlug: PostRepository['getPostBySlug'];
+    getFeed: PostRepository['getFeed'];
+    deletePost: PostRepository['deletePost'];
   }
-
 }
-export default postService;
+export default function createPostService(deps: PostServiceDeps): PostService {
+  return {
+    async getFeed({ limit, page, search, authorId, categoryId }, currentUserId) {
+      const offset = (limit * (page - 1));
+      const posts = await deps.postRepository.getFeed({ limit, offset, search, authorId, categoryId }, currentUserId);
+      const total = posts[0]?.total ?? 0
+      return {
+        data: posts.map(({ total, ...post }) => post),
+        meta: {
+          total,
+          page,
+          limit,
+          hasNextPage: offset + limit < total,
+          hasPreviousPage: offset > 0
+        }
+      }
+    },
+    async createPost(createPostPayload) {
+      const slug = generateSlug(createPostPayload.title);
+      return deps.postRepository.createPost({ ...createPostPayload, slug });
+    },
+    async deletePost(postId, authorId) {
+      const post = await deps.postRepository.deletePost(postId, authorId);
+      if (!post) {
+        throw new NotFoundError('Post not found');
+      }
+      return post;
+    },
+    async getPostById(postId, currentUserId) {
+      return deps.postRepository.getPostById(postId, currentUserId);
+    },
+    async getPostBySlug(slug, currentUserId) {
+      return deps.postRepository.getPostBySlug(slug, currentUserId);
+    }
 
-function generateSlug(title: string): string {
+  }
+}
+
+export function generateSlug(title: string): string {
   return title
     .toLowerCase()
     .trim()
