@@ -1,4 +1,5 @@
 import { PostEntity } from "../../database/types/post.entity.js";
+import { PaginatedData } from "../../shared/types/paginated-data.js";
 
 export interface CreatePostPayload {
   authorId: string;
@@ -21,14 +22,5 @@ export interface Post extends PostEntity {
 export type PostForFeed = Omit<Post, 'commentCount' | 'content'>;
 export type PostForFeedRow = PostForFeed & { total: number };
 
-export interface FeedResponse {
-  data: PostForFeed[]
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  }
-}
+export type FeedResponse = PaginatedData<PostForFeed>;
 
