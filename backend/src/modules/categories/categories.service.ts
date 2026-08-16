@@ -24,18 +24,10 @@ export default function createCategoriesService(deps: CategoriesServiceDeps) {
       }
     },
     async getCategoryByName(categoryName: string) {
-      const category = await deps.categoriesRepository.getCategoryByName(categoryName);
-      if (!category) {
-        return null;
-      }
-      return category
+      return deps.categoriesRepository.getCategoryByName(categoryName);
     },
     async getCategoryById(categoryId: string) {
-      const category = await deps.categoriesRepository.getCategoryById(categoryId);
-      if (!category) {
-        return null;
-      }
-      return category
+      return deps.categoriesRepository.getCategoryById(categoryId);
     }
   }
 }

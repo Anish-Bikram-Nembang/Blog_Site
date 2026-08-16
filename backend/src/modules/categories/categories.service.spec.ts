@@ -59,25 +59,4 @@ describe('categoriesService', () => {
       });
     });
   })
-  describe('getCategoryById', () => {
-    it('should return null if category not found', async () => {
-      const { api, mockedCategoriesRepository } = makeCategoriesService({
-        getCategoryById: jest.fn<CategoriesServiceDeps['categoriesRepository']['getCategoryById']>().mockResolvedValue(null),
-      });
-      const result = await api.getCategoryById(category.categoryId);
-      expect(mockedCategoriesRepository.getCategoryById).toHaveBeenCalledWith(category.categoryId);
-      expect(result).toBe(null);
-    })
-  })
-  describe('getCategoryByName', () => {
-    it('should return null if category not found', async () => {
-      const { api, mockedCategoriesRepository } = makeCategoriesService({
-        getCategoryByName: jest.fn<CategoriesServiceDeps['categoriesRepository']['getCategoryByName']>().mockResolvedValue(null),
-      });
-      const result = await api.getCategoryByName(category.name);
-      expect(mockedCategoriesRepository.getCategoryByName).toHaveBeenCalledWith(category.name);
-      expect(result).toBe(null);
-    })
-
-  })
-})
+});

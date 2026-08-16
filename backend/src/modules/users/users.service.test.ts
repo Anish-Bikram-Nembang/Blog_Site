@@ -98,7 +98,7 @@ describe('userService', () => {
     });
     it('should return null if user not found', async () => {
       const { api, mockedUserRepository } = makeUserService();
-      const result = await api.findUserByEmail(user.username);
+      const result = await api.findUserByEmail(user.email);
       expect(mockedUserRepository.findUserByEmail).toHaveBeenCalledWith(user.email);
       expect(result).toBe(null);
     });
