@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import categoriesService from "./categories.service.instance.js";
 import { NotFoundError, ValidationError } from "../../errors/errors.js";
+import { requireString } from "../../shared/utils/typeValidators.js";
 
 const categoriesController = {
   async createCategory(req: Request, res: Response) {
@@ -16,10 +17,7 @@ const categoriesController = {
     res.json(response);
   },
   async getCategoryById(req: Request, res: Response) {
-    const { categoryId } = req.params;
-    if (typeof categoryId !== "string") {
-      throw new NotFoundError(`Category with ID ${categoryId} not found`);
-    }
+    const categoryId = requireString(req.params.categoryId, 'categoryId');
     const category = await categoriesService.getCategoryById(categoryId);
     if (!category) {
       throw new NotFoundError(`Category with ID ${categoryId} not found`);

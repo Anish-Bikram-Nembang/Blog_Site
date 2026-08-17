@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 interface Config {
+  adminId: string;
   port: number;
   saltRounds: number;
 
@@ -16,6 +17,7 @@ interface Config {
   postgresMaxConnections: number;
 }
 const config: Config = {
+  adminId: String(process.env.ADMIN_ID),
   port: Number(process.env.PORT) || 3000,
   saltRounds: Number(process.env.SALT_ROUNDS) || 10,
 

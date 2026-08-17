@@ -1,4 +1,4 @@
-import { ValidationError } from "../errors/errors.js";
+import { ValidationError } from "../../errors/errors.js";
 
 export function asString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;

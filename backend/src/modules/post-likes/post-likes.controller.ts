@@ -1,29 +1,18 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import postLikesService from "./post-likes.service.instance.js";
-import { ValidationError, NotFoundError } from "../../errors/errors.js";
+import { AuthenticatedRequest } from "../auth/auth.types.js";
+import { requireString } from "../../shared/utils/typeValidators.js";
 
 const postLikeController = {
-  async like(req: Request, res: Response) {
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new ValidationError();
-    }
-    const postId = req.params.postId;
-    if (typeof postId !== "string") {
-      throw new NotFoundError();
-    }
+  async like(req: AuthenticatedRequest, res: Response) {
+    const userId = req.user.userId;
+    const postId = requireString(req.params.postId, 'postId');
     const result = await postLikesService.createLike(userId, postId);
     res.status(200).json(result);
   },
-  async unlike(req: Request, res: Response) {
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new ValidationError();
-    }
-    const postId = req.params.postId;
-    if (typeof postId !== "string") {
-      throw new NotFoundError();
-    }
+  async unlike(req: AuthenticatedRequest, res: Response) {
+    const userId = req.user.userId;
+    const postId = requireString(req.params.postId, 'postId');
     const result = await postLikesService.deleteLike(userId, postId);
     res.status(204).json(result);
   }
