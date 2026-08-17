@@ -1,5 +1,5 @@
 import { Response } from "express";
-import postLikesService from "./post-likes.service.instance.js";
+import postLikesService from "./index.js";
 import { AuthenticatedRequest } from "../auth/auth.types.js";
 import { requireString } from "../../shared/utils/typeValidators.js";
 

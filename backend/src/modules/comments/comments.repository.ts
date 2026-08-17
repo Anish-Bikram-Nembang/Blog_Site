@@ -1,5 +1,5 @@
-import pool from "../../database/pool.service.js"
 import { CommentEntity } from "../../database/types/comment.entity.js";
+import { Queryable } from "../../shared/types/queryable.js";
 import { CommentRow } from "./comments.types.js";
 
 export interface CommentRepository {
@@ -7,9 +7,12 @@ export interface CommentRepository {
   postComment({ postId, authorId, content }: { postId: string, authorId: string, content: string }): Promise<CommentEntity>;
   deleteComment(commentId: string, authorId: string): Promise<CommentEntity | null>;
 }
-const commentRepository: CommentRepository = {
-  async getCommentsByPostId({ postId, limit, offset }, currentUserId) {
-    const result = await pool.query<CommentRow>(`
+export default function createCommentRepository(deps: {
+  db: Queryable
+}): CommentRepository {
+  return {
+    async getCommentsByPostId({ postId, limit, offset }, currentUserId) {
+      const result = await deps.db.query<CommentRow>(`
         SELECT
           c.comment_id as "commentId",
           c.post_id AS "postId",
@@ -30,11 +33,11 @@ const commentRepository: CommentRepository = {
         ORDER BY created_at ASC
         LIMIT $2 OFFSET $3
     `, [postId, limit, offset, currentUserId ?? null]);
-    return result.rows;
+      return result.rows;
 
-  },
-  async postComment({ postId, authorId, content }) {
-    const result = await pool.query<CommentEntity>(`
+    },
+    async postComment({ postId, authorId, content }) {
+      const result = await deps.db.query<CommentEntity>(`
       INSERT INTO comments (post_id, author_id, content)
       VALUES ($1, $2, $3)
       RETURNING
@@ -46,11 +49,11 @@ const commentRepository: CommentRepository = {
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       `, [postId, authorId, content])
-    return result.rows[0];
+      return result.rows[0];
 
-  },
-  async deleteComment(commentId, authorId) {
-    const result = await pool.query<CommentEntity>(`
+    },
+    async deleteComment(commentId, authorId) {
+      const result = await deps.db.query<CommentEntity>(`
       DELETE FROM comments WHERE comment_id = $1 AND author_id = $2
       RETURNING
         comment_id as "commentId",
@@ -61,8 +64,8 @@ const commentRepository: CommentRepository = {
         created_at AS "createdAt",
         updated_at AS "updatedAt"
       `, [commentId, authorId]);
-    return result.rows[0] ?? null;
+      return result.rows[0] ?? null;
 
+    }
   }
 }
-export default commentRepository;

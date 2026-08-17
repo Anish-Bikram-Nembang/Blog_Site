@@ -1,5 +1,5 @@
 import { Response } from "express";
-import postService from "./posts.service.instance.js";
+import postService from "./index.js";
 import { asNumber, asString, requireString } from "../../shared/utils/typeValidators.js";
 import { AuthenticatedRequest, RequestAfterAttachUserMiddleware } from "../auth/auth.types.js";
 

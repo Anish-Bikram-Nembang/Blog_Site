@@ -1,5 +1,5 @@
 import { Response } from "express";
-import commentService from "./comments.service.instance.js";
+import commentService from "./index.js";
 import { ValidationError } from "../../errors/errors.js";
 import { AuthenticatedRequest, RequestAfterAttachUserMiddleware } from "../auth/auth.types.js";
 import { requireString } from "../../shared/utils/typeValidators.js";

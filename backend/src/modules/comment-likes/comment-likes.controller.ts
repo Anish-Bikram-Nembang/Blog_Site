@@ -1,5 +1,5 @@
 import { Response } from "express";
-import commentLikeService from "./comment-likes.service.instance.js";
+import commentLikeService from "./index.js";
 import { ValidationError } from "../../errors/errors.js";
 import { AuthenticatedRequest } from "../auth/auth.types.js";
 

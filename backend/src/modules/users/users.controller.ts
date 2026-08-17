@@ -1,5 +1,5 @@
 import { Response } from "express";
-import userService from "./users.service.instance.js";
+import userService from "./index.js";
 import { UnauthorizedError } from "../../errors/errors.js";
 import { AuthenticatedRequest } from "../auth/auth.types.js";
 

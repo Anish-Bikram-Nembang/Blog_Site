@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import authService from "./auth.service.instance.js";
+import authService from "./index.js";
 
 const authController = {
   async signup(req: Request, res: Response) {

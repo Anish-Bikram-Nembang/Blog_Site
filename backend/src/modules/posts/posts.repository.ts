@@ -1,5 +1,5 @@
-import pool from "../../database/pool.service.js"
 import { PostEntity } from "../../database/types/post.entity.js"
+import { Queryable } from "../../shared/types/queryable.js"
 import { CreatePostPayload, Post, PostForFeedRow } from "./posts.types.js"
 
 export interface PostRepository {
@@ -9,9 +9,12 @@ export interface PostRepository {
   getPostById(postId: string, currentUserId: string | undefined): Promise<Post>
   getPostBySlug(slug: string, currentUserId: string | undefined): Promise<Post>
 }
-const postRepository: PostRepository = {
-  async createPost({ authorId, title, content, slug, categoryId, description }) {
-    const result = await pool.query<PostEntity>(`
+export default function createPostRepository(deps: {
+  db: Queryable
+}): PostRepository {
+  return {
+    async createPost({ authorId, title, content, slug, categoryId, description }) {
+      const result = await deps.db.query<PostEntity>(`
       INSERT INTO posts
         (author_id, title, slug, content, category_id, description)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -22,15 +25,15 @@ const postRepository: PostRepository = {
         created_at AS "createdAt",
         updated_at AS "updatedAt",
         title, slug, content, description`
-      , [authorId, title, slug, content, categoryId ?? null, description]);
-    return result.rows[0];
-  },
-  async deletePost(postId, authorId) {
-    const result = await pool.query<PostEntity>(`DELETE FROM posts WHERE post_id=$1 AND author_id=$2`, [postId, authorId]);
-    return result.rows[0] ?? null;
-  },
-  async getPostById(postId, currentUserId) {
-    const result = await pool.query<Post>(`
+        , [authorId, title, slug, content, categoryId ?? null, description]);
+      return result.rows[0];
+    },
+    async deletePost(postId, authorId) {
+      const result = await deps.db.query<PostEntity>(`DELETE FROM posts WHERE post_id=$1 AND author_id=$2`, [postId, authorId]);
+      return result.rows[0] ?? null;
+    },
+    async getPostById(postId, currentUserId) {
+      const result = await deps.db.query<Post>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -51,10 +54,10 @@ const postRepository: PostRepository = {
       WHERE p.post_id=$1
       GROUP BY p.post_id, u.user_id, c.category_id
       `, [postId, currentUserId ?? null]);
-    return result.rows[0] ?? null;
-  },
-  async getPostBySlug(slug, currentUserId) {
-    const result = await pool.query<Post>(`
+      return result.rows[0] ?? null;
+    },
+    async getPostBySlug(slug, currentUserId) {
+      const result = await deps.db.query<Post>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -75,27 +78,27 @@ const postRepository: PostRepository = {
       WHERE p.slug=$1
       GROUP BY p.post_id, u.user_id, c.category_id
       `, [slug, currentUserId ?? null]);
-    return result.rows[0] ?? null;
-  },
-  async getFeed({ limit, offset, categoryId, authorId, search }, currentUserId?) {
-    const whereClauseArray = [];
-    const queryArray: Array<string | number | null> = [limit, offset, currentUserId ?? null];
-    if (authorId) {
-      queryArray.push(authorId);
-      whereClauseArray.push(`p.author_id = $${queryArray.length}`);
-    }
-    if (categoryId) {
-      queryArray.push(categoryId)
-      whereClauseArray.push(`c.category_id = $${queryArray.length}`);
-    }
-    if (search) {
-      queryArray.push(`%${search}%`);
-      whereClauseArray.push(`(p.title ILIKE $${queryArray.length} OR u.username ILIKE $${queryArray.length})`);
-    }
-    const whereClause = whereClauseArray.length
-      ? `WHERE ${whereClauseArray.join(' AND ')}`
-      : '';
-    const result = await pool.query<PostForFeedRow>(`
+      return result.rows[0] ?? null;
+    },
+    async getFeed({ limit, offset, categoryId, authorId, search }, currentUserId?) {
+      const whereClauseArray = [];
+      const queryArray: Array<string | number | null> = [limit, offset, currentUserId ?? null];
+      if (authorId) {
+        queryArray.push(authorId);
+        whereClauseArray.push(`p.author_id = $${queryArray.length}`);
+      }
+      if (categoryId) {
+        queryArray.push(categoryId)
+        whereClauseArray.push(`c.category_id = $${queryArray.length}`);
+      }
+      if (search) {
+        queryArray.push(`%${search}%`);
+        whereClauseArray.push(`(p.title ILIKE $${queryArray.length} OR u.username ILIKE $${queryArray.length})`);
+      }
+      const whereClause = whereClauseArray.length
+        ? `WHERE ${whereClauseArray.join(' AND ')}`
+        : '';
+      const result = await deps.db.query<PostForFeedRow>(`
       SELECT
         p.post_id AS "postId",
         p.author_id AS "authorId",
@@ -120,9 +123,9 @@ const postRepository: PostRepository = {
       LIMIT $1 OFFSET $2
       `, queryArray);
 
-    return result.rows;
+      return result.rows;
 
+    }
   }
 }
 
-export default postRepository;

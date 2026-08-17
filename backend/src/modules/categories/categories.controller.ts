@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import categoriesService from "./categories.service.instance.js";
+import categoriesService from "./index.js";
 import { NotFoundError, ValidationError } from "../../errors/errors.js";
 import { requireString } from "../../shared/utils/typeValidators.js";
 
